@@ -51,6 +51,44 @@ def get_user_by_id(user_id):
         }), 404
     return jsonify(user.serialize()), 200
 
+@app.route('/users', methods=['POST'])
+def add_user():
+    email = request.json.get('email')
+    username = request.json.get('username')
+    password = request.json.get('password')
+    if not email or not username or not password:
+        return jsonify({
+            "msg": 'Email, username, and password are required'
+        }), 400
+    user = User(email=email, username=username, password=password)
+    db.session.add(user)
+    db.session.commit()
+    return jsonify(user.serialize()), 201
+
+@app.route('/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({
+            "msg": 'User not found'
+        }), 404
+    user.email = request.json.get('email', user.email)
+    user.username = request.json.get('username', user.username)
+    user.password = request.json.get('password', user.password)
+    db.session.commit()
+    return jsonify(user.serialize()), 200
+
+@app.route('/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({
+            "msg": 'User not found'
+        }), 404
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"msg": "User deleted"}), 200
+
 @app.route('/users/<int:user_id>/favorites', methods=['GET'])
 def get_user_favorites(user_id):
     favorites = Favorite.query.filter_by(user_id=user_id).all()
