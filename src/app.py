@@ -74,7 +74,6 @@ def update_user(user_id):
         }), 404
     user.email = request.json.get('email', user.email)
     user.username = request.json.get('username', user.username)
-    user.password = request.json.get('password', user.password)
     db.session.commit()
     return jsonify(user.serialize()), 200
 
