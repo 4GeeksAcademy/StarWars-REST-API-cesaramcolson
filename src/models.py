@@ -104,13 +104,15 @@ class Favorite(db.Model):
         except Exception as error:
             db.session.rollback()
             raise Exception(error.args)
-
+    
     def serialize(self):
         item_id = self.character_id if self.character_id else self.planet_id
         item_name = self.character.name if self.character else self.planet.name
+        item_type = "character" if self.character_id else "planet"
         return {
             'id': self.id,
             'user_id': self.user_id,
             'item_id': item_id,
-            'item_name': item_name
+            'item_name': item_name,
+            'item_type': item_type
         }
