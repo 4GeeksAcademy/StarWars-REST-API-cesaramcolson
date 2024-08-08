@@ -42,7 +42,7 @@ class Character(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     description = db.Column(db.String(250))
-    favorites = db.relationship("Favorite", backref="character_favorites")
+    favorites = db.relationship("Favorite", backref="character")
 
     def __init__(self, name, description=None):
         self.name = name
@@ -65,7 +65,7 @@ class Planet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     description = db.Column(db.String(250))
-    favorites = db.relationship("Favorite", backref="planet_favorites")
+    favorites = db.relationship("Favorite", backref="planet")
 
     def __init__(self, name, description=None):
         self.name = name
@@ -89,9 +89,6 @@ class Favorite(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=True)
     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=True)
-
-    character = db.relationship('Character', lazy='joined', backref="favorite_character")
-    planet = db.relationship('Planet', lazy='joined', backref="favorite_planet")
 
     def __init__(self, user_id, character_id=None, planet_id=None):
         if character_id is not None and planet_id is not None:
