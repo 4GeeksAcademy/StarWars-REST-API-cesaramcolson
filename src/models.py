@@ -1,6 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.sql import func
 
 db = SQLAlchemy()
 
@@ -9,7 +8,7 @@ class User(db.Model):
     username = db.Column(db.String(250), nullable=False, unique=True)
     email = db.Column(db.String(250), nullable=False, unique=True)
     password_hash = db.Column(db.String(250), nullable=False)
-    favorites = db.relationship("Favorite", backref="user")
+    favorites = db.relationship("Favorite", backref="user_favorites")
 
     def __init__(self, username, email, password):
         self.username = username
@@ -43,7 +42,7 @@ class Character(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     description = db.Column(db.String(250))
-    favorites = db.relationship("Favorite", backref="character")
+    favorites = db.relationship("Favorite", backref="character_favorites")
 
     def __init__(self, name, description=None):
         self.name = name
@@ -66,7 +65,7 @@ class Planet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
     description = db.Column(db.String(250))
-    favorites = db.relationship("Favorite", backref="planet")
+    favorites = db.relationship("Favorite", backref="planet_favorites")
 
     def __init__(self, name, description=None):
         self.name = name
@@ -87,12 +86,18 @@ class Planet(db.Model):
 
 class Favorite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime(timezone=True), default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     character_id = db.Column(db.Integer, db.ForeignKey('character.id'), nullable=True)
     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=True)
 
+    character = db.relationship('Character', lazy='joined', backref="favorite_character")
+    planet = db.relationship('Planet', lazy='joined', backref="favorite_planet")
+
     def __init__(self, user_id, character_id=None, planet_id=None):
+        if character_id is not None and planet_id is not None:
+            raise ValueError("A favorite can only have either a character or a planet, not both.")
+        if character_id is None and planet_id is None:
+            raise ValueError("A favorite must have either a character or a planet.")
         self.user_id = user_id
         self.character_id = character_id
         self.planet_id = planet_id
@@ -104,10 +109,11 @@ class Favorite(db.Model):
             raise Exception(error.args)
 
     def serialize(self):
+        item_id = self.character_id if self.character_id else self.planet_id
+        item_name = self.character.name if self.character else self.planet.name
         return {
-            "id": self.id,
-            "user_id": self.user_id,
-            "character_id": self.character_id,
-            "planet_id": self.planet_id,
-            "date": self.date.isoformat()
+            'id': self.id,
+            'user_id': self.user_id,
+            'item_id': item_id,
+            'item_name': item_name
         }

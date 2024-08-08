@@ -42,9 +42,17 @@ def get_users():
     users = User.query.all()
     return jsonify([user.serialize() for user in users]), 200
 
-@app.route('/users/favorites', methods=['GET'])
-def get_user_favorites():
-    user_id = request.args.get('user_id')
+@app.route('/users/<int:user_id>', methods=['GET'])
+def get_user_by_id(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({
+            "msg": 'User not found'
+        }), 404
+    return jsonify(user.serialize()), 200
+
+@app.route('/users/<int:user_id>/favorites', methods=['GET'])
+def get_user_favorites(user_id):
     favorites = Favorite.query.filter_by(user_id=user_id).all()
     return jsonify([favorite.serialize() for favorite in favorites]), 200
 
